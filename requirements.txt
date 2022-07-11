@@ -1,2 +1,3 @@
 path
+pillow
 git+https://github.com/jevinskie/pytrofs#egg=pytrofs

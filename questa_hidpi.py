@@ -4,6 +4,7 @@ import argparse
 import subprocess
 
 from path import Path, TempDir
+from PIL import Image, UnidentifiedImageError
 from pytrofs.trofs import create, extract
 
 
@@ -13,6 +14,18 @@ def real_main(args):
     tmp_dir = Path("tmp")
     extract(args.in_file, tmp_dir)
     subprocess.check_call(["patch", "-p1"], stdin=open(patch_file), cwd=tmp_dir)
+    for file in tmp_dir.walkfiles():
+        try:
+            img = Image.open(file)
+            img = img.resize((img.width * 2, img.height * 2), resample=Image.Resampling.NEAREST)
+            try:
+                img.save(file)
+            except KeyError:
+                pass
+        except UnidentifiedImageError:
+            pass
+        except ValueError:
+            pass
     create(args.out_file, tmp_dir)
 
 
