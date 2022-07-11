@@ -1,0 +1,20 @@
+--- a/mtiwidgets/scripts/mgc_style.tcl
++++ b/mtiwidgets/scripts/mgc_style.tcl
+@@ -166,7 +166,7 @@ proc MGC::style::init_fonts {args} {
+ 	    if { [string equal $::tcl_platform(platform) windows] } {
+ 		set sz  [expr {abs($data(-size))}]
+ 	    } else {
+-		set sz  [expr {-abs($data(-size))}]
++		set sz  [expr {abs($data(-size))}]
+ 	    }
+ 	}
+ 	set fam $data(-family)
+@@ -208,7 +208,7 @@ proc MGC::style::init_fonts {args} {
+ 		if { [string equal $::tcl_platform(platform) windows] } {
+ 			set sz  [expr {abs($data(-size))}]
+ 		} else {
+-			set sz  [expr {-abs($data(-size))}]
++			set sz  [expr {abs($data(-size))}]
+ 		}
+ 	}
+ 	set fam $data(-family)
