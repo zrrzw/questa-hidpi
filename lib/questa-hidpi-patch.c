@@ -56,7 +56,7 @@ static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationC
                 height_idx = i + 1;
             }
         }
-        if (width_idx != -1 || height_idx != -1) {
+        if (width_idx != -1 && height_idx != -1) {
             int num_pruned = 0;
             if (width_idx != -1) {
                 num_pruned += 2;
