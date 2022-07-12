@@ -25,8 +25,7 @@ enum _TkHookId {
 };
 
 struct _TkInvocationData {
-    int argc;
-    char **argv_mod;
+    const char **argv_mod;
 };
 
 static void tk_listener_iface_init(gpointer g_iface, gpointer iface_data);
@@ -39,65 +38,47 @@ G_DEFINE_TYPE_EXTENDED(TkListener, tk_listener, G_TYPE_OBJECT, 0,
 #define SCALE(x) ((x)*2)
 
 static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationContext *ic) {
-    TkListener *self = TK_LISTENER(listener);
+    (void)listener;
     TkHookId hook_id = GUM_IC_GET_FUNC_DATA(ic, TkHookId);
 
     switch (hook_id) {
     case HOOK_TK_CONFIGUREWIDGET: {
         TkInvocationData *id = GUM_IC_GET_INVOCATION_DATA(ic, TkInvocationData);
         int argc             = GPOINTER_TO_INT(gum_invocation_context_get_nth_argument(ic, 3));
-        id->argc             = argc;
         const char **argv    = (const char **)gum_invocation_context_get_nth_argument(ic, 4);
-        int width            = -1;
         int width_idx        = -1;
-        int height           = -1;
         int height_idx       = -1;
-        char new_width_buf[32];
-        char new_height_buf[32];
         for (int i = 0; i < argc; ++i) {
             if (!strcmp(argv[i], "-width")) {
-                width_idx     = i + 1;
-                width         = atoi(argv[width_idx]);
-                int new_width = SCALE(width);
-                snprintf(new_width_buf, sizeof(new_width_buf), "%d", new_width);
+                width_idx = i + 1;
             }
             if (!strcmp(argv[i], "-height")) {
-                height_idx     = i + 1;
-                height         = atoi(argv[height_idx]);
-                int new_height = SCALE(height);
-                snprintf(new_height_buf, sizeof(new_height_buf), "%d", new_height);
-                g_print("old height: %s new height: %s height_idx: %d\n", argv[height_idx],
-                        new_height_buf, height_idx);
+                height_idx = i + 1;
             }
         }
-        g_print("width_idx: %d height_idx %d\n", width_idx, height_idx);
         if (width_idx != -1 || height_idx != -1) {
-            char **argv_mod = malloc(sizeof(char **) * argc);
+            int num_pruned = 0;
+            if (width_idx != -1) {
+                num_pruned += 2;
+            }
+            if (height_idx != -1) {
+                num_pruned += 2;
+            }
+            const char **argv_mod = malloc(sizeof(const char **) * (argc - num_pruned));
             g_assert(argv_mod);
+            int argc_mod = 0;
             for (int i = 0; i < argc; ++i) {
-                if (i == width_idx) {
-                    size_t len  = strlen(new_width_buf);
-                    argv_mod[i] = malloc(len + 1);
-                    g_assert(argv_mod[i]);
-                    strcpy(argv_mod[i], new_width_buf);
-                } else if (i == height_idx) {
-                    size_t len  = strlen(new_height_buf);
-                    argv_mod[i] = malloc(len + 1);
-                    g_assert(argv_mod[i]);
-                    strcpy(argv_mod[i], new_height_buf);
+                if (i == width_idx || i == width_idx - 1 || i == height_idx ||
+                    i == height_idx - 1) {
+                    // skip
                 } else {
-                    size_t len  = strlen(argv[i]);
-                    argv_mod[i] = malloc(len + 1);
-                    g_assert(argv_mod[i]);
-                    strcpy(argv_mod[i], argv[i]);
+                    argv_mod[argc_mod] = argv[i];
+                    argc_mod += 1;
                 }
             }
             id->argv_mod = argv_mod;
+            gum_invocation_context_replace_nth_argument(ic, 3, GSIZE_TO_POINTER(argc_mod));
             gum_invocation_context_replace_nth_argument(ic, 4, argv_mod);
-            for (int i = 0; i < argc; ++i) {
-                g_print("%d: %s\n", i, argv_mod[i]);
-            }
-            g_print("[*] Tk_ConfigureWidget(width = %d, height = %d)\n", width, height);
         } else {
             id->argv_mod = NULL;
         }
@@ -108,16 +89,13 @@ static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationC
 }
 
 static void tk_listener_on_leave(GumInvocationListener *listener, GumInvocationContext *ic) {
-    TkListener *self = TK_LISTENER(listener);
+    (void)listener;
     TkHookId hook_id = GUM_IC_GET_FUNC_DATA(ic, TkHookId);
 
     switch (hook_id) {
     case HOOK_TK_CONFIGUREWIDGET: {
         TkInvocationData *id = GUM_IC_GET_INVOCATION_DATA(ic, TkInvocationData);
         if (id->argv_mod) {
-            for (int i = 0; i < id->argc; ++i) {
-                free(id->argv_mod[i]);
-            }
             free(id->argv_mod);
         }
     } break;
@@ -127,18 +105,22 @@ static void tk_listener_on_leave(GumInvocationListener *listener, GumInvocationC
 }
 
 static void tk_listener_class_init(TkListenerClass *klass) {
+    (void)klass;
     (void)TK_IS_LISTENER;
     (void)glib_autoptr_cleanup_TkListener;
 }
 
 static void tk_listener_iface_init(gpointer g_iface, gpointer iface_data) {
     GumInvocationListenerInterface *iface = g_iface;
+    (void)iface_data;
 
     iface->on_enter = tk_listener_on_enter;
     iface->on_leave = tk_listener_on_leave;
 }
 
-static void tk_listener_init(TkListener *self) {}
+static void tk_listener_init(TkListener *self) {
+    (void)self;
+}
 
 static GumInterceptor *interceptor;
 static GumInvocationListener *listener;
