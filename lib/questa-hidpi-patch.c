@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,6 +36,8 @@ G_DECLARE_FINAL_TYPE(TkListener, tk_listener, TK, LISTENER, GObject)
 G_DEFINE_TYPE_EXTENDED(TkListener, tk_listener, G_TYPE_OBJECT, 0,
                        G_IMPLEMENT_INTERFACE(GUM_TYPE_INVOCATION_LISTENER, tk_listener_iface_init))
 
+#define SCALE(x) ((x)*2)
+
 static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationContext *ic) {
     TkListener *self = TK_LISTENER(listener);
     TkHookId hook_id = GUM_IC_GET_FUNC_DATA(ic, TkHookId);
@@ -46,32 +49,57 @@ static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationC
         id->argc             = argc;
         const char **argv    = (const char **)gum_invocation_context_get_nth_argument(ic, 4);
         int width            = -1;
-        int width_idx;
+        int width_idx        = -1;
+        int height           = -1;
+        int height_idx       = -1;
         char new_width_buf[32];
-        int height = -1;
-        int height_idx;
         char new_height_buf[32];
         for (int i; i < argc; ++i) {
             if (!strcmp(argv[i], "-width")) {
-                width_idx = i + 1;
-                width     = atoi(argv[width_idx]);
+                width_idx     = i + 1;
+                width         = atoi(argv[width_idx]);
+                int new_width = SCALE(width);
+                snprintf(new_width_buf, sizeof(new_width_buf), "%d", new_width);
             }
             if (!strcmp(argv[i], "-height")) {
-                height_idx = i + 1;
-                height     = atoi(argv[height_idx]);
+                height_idx     = i + 1;
+                height         = atoi(argv[height_idx]);
+                int new_height = SCALE(height);
+                snprintf(new_height_buf, sizeof(new_height_buf), "%d", new_height);
+                g_print("old height: %s new height: %s height_idx: %d\n", argv[height_idx],
+                        new_height_buf, height_idx);
             }
         }
-        if (width != -1 || height != -1) {
+        g_print("width_idx: %d height_idx %d\n", width_idx, height_idx);
+        if (width_idx != -1 || height_idx != -1) {
+            g_print("fuck 3\n");
             char **argv_mod = malloc(sizeof(char **) * argc);
             g_assert(argv_mod);
             for (int i = 0; i < argc; ++i) {
-                size_t len  = strlen(argv[i]);
-                argv_mod[i] = malloc(len + 1);
-                g_assert(argv_mod[i]);
-                strcpy(argv_mod[i], argv[i]);
+                if (i == width_idx) {
+                    size_t len  = strlen(new_width_buf);
+                    argv_mod[i] = malloc(len + 1);
+                    g_assert(argv_mod[i]);
+                    strcpy(argv_mod[i], new_width_buf);
+                    g_print("fuck 1\n");
+                } else if (i == height_idx) {
+                    size_t len  = strlen(new_height_buf);
+                    argv_mod[i] = malloc(len + 1);
+                    g_assert(argv_mod[i]);
+                    g_print("fuck 2\n");
+                    strcpy(argv_mod[i], new_height_buf);
+                } else {
+                    size_t len  = strlen(argv[i]);
+                    argv_mod[i] = malloc(len + 1);
+                    g_assert(argv_mod[i]);
+                    strcpy(argv_mod[i], argv[i]);
+                }
             }
             id->argv_mod = argv_mod;
             gum_invocation_context_replace_nth_argument(ic, 4, argv_mod);
+            for (int i; i < argc; ++i) {
+                g_print("%d: %s\n", i, argv_mod[i]);
+            }
             g_print("[*] Tk_ConfigureWidget(width = %d, height = %d)\n", width, height);
         } else {
             id->argv_mod = NULL;
