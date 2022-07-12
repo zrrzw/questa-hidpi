@@ -54,7 +54,7 @@ static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationC
         int height_idx       = -1;
         char new_width_buf[32];
         char new_height_buf[32];
-        for (int i; i < argc; ++i) {
+        for (int i = 0; i < argc; ++i) {
             if (!strcmp(argv[i], "-width")) {
                 width_idx     = i + 1;
                 width         = atoi(argv[width_idx]);
@@ -72,7 +72,6 @@ static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationC
         }
         g_print("width_idx: %d height_idx %d\n", width_idx, height_idx);
         if (width_idx != -1 || height_idx != -1) {
-            g_print("fuck 3\n");
             char **argv_mod = malloc(sizeof(char **) * argc);
             g_assert(argv_mod);
             for (int i = 0; i < argc; ++i) {
@@ -81,12 +80,10 @@ static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationC
                     argv_mod[i] = malloc(len + 1);
                     g_assert(argv_mod[i]);
                     strcpy(argv_mod[i], new_width_buf);
-                    g_print("fuck 1\n");
                 } else if (i == height_idx) {
                     size_t len  = strlen(new_height_buf);
                     argv_mod[i] = malloc(len + 1);
                     g_assert(argv_mod[i]);
-                    g_print("fuck 2\n");
                     strcpy(argv_mod[i], new_height_buf);
                 } else {
                     size_t len  = strlen(argv[i]);
@@ -97,7 +94,7 @@ static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationC
             }
             id->argv_mod = argv_mod;
             gum_invocation_context_replace_nth_argument(ic, 4, argv_mod);
-            for (int i; i < argc; ++i) {
+            for (int i = 0; i < argc; ++i) {
                 g_print("%d: %s\n", i, argv_mod[i]);
             }
             g_print("[*] Tk_ConfigureWidget(width = %d, height = %d)\n", width, height);

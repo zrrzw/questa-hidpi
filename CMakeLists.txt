@@ -12,6 +12,7 @@ if (${FORCE_COLORED_OUTPUT})
     endif ()
 endif ()
 
+add_compile_options(-Wall -Wextra)
 add_compile_options(-fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables)
 add_compile_options(-Os -fvisibility=hidden -ffunction-sections -fdata-sections)
 add_link_options(-Wl,--gc-sections)
