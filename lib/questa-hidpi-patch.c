@@ -34,9 +34,23 @@ static void tk_listener_on_enter(GumInvocationListener *listener, GumInvocationC
     TkHookId hook_id = GUM_IC_GET_FUNC_DATA(ic, TkHookId);
 
     switch (hook_id) {
-    case HOOK_TK_CONFIGUREWIDGET:
-        g_print("[*] Tk_ConfigureWidget()\n");
-        break;
+    case HOOK_TK_CONFIGUREWIDGET: {
+        int argc          = GPOINTER_TO_INT(gum_invocation_context_get_nth_argument(ic, 3));
+        const char **argv = (const char **)gum_invocation_context_get_nth_argument(ic, 4);
+        int width         = -1;
+        int height        = -1;
+        for (int i; i < argc; ++i) {
+            if (!strcmp(argv[i], "-width")) {
+                width = atoi(argv[i + 1]);
+            }
+            if (!strcmp(argv[i], "-height")) {
+                height = atoi(argv[i + 1]);
+            }
+        }
+        if (width != -1 || height != -1) {
+            g_print("[*] Tk_ConfigureWidget(width = %d, height = %d)\n", width, height);
+        }
+    } break;
     default:
         g_assert(!"unhandled case");
     }
